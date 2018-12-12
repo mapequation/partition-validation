@@ -121,6 +121,7 @@ int main(int argc,char *argv[]){
     partitions.clusterPartitions(0);
     if(NvalidationPartitions > 0){
       partitions.validatePartitions(0,"");
+      cout << "-->Fraction of validation partitions that fits in a cluster: " << 1.0*partitions.NtotValidated/partitions.NtotTested << endl;
     }
     partitions.printClusters();
   }

@@ -38,7 +38,6 @@ struct my_ofstream : ofstream {
   }
 };
 
-
 template <class T>
 inline string to_string (const T& t){
 	stringstream ss;
@@ -82,16 +81,6 @@ public:
   }
 };
 
-unsigned int convert_div_to_uintdiv(double div)
-{ 
-  return static_cast<unsigned int>(max_unsigned_int_size*div);
-}
-
-double convert_uintdiv_to_div(unsigned int uintdiv)
-{ 
-  return static_cast<double>(1.0*uintdiv/max_unsigned_int_size);
-}
-
 class Partition{
 public:
 	Partition();
@@ -99,7 +88,6 @@ public:
 	int partitionId;
 	vector<vector<int> > assignments;
 	unordered_map<int,int> clusterSizes;
-	Partition *minCenterPartition;
 };
 
 Partition::Partition(){
@@ -111,8 +99,6 @@ Partition::Partition(int partitionid, int Nnodes){
 }
 
 typedef vector< vector<Partition *> > Clusters;
-
-
 
 class Partitions{
 private:
@@ -171,6 +157,9 @@ Partitions::Partitions(string inFileName,string outFileName,double distThreshold
 		exit(-1);
 	}
 	readPartitionsFile();
+	if(crossvalidateK > 0) // Randomize ordered partitions
+		shuffle(partitions.begin(), partitions.end(),mtRands[0]);
+
 	ifs.close();
 
 }
@@ -244,11 +233,17 @@ void Partitions::clusterPartitions(int fold){
 
 	cout << "Clustering partitions:" << endl;
 
-
 	vector<Partition*> partitionPtrs = vector<Partition*>(NtrainingPartitions);
 	for(int i=0;i<NtrainingPartitions;i++){
 		partitionPtrs[i] = &partitions[i + (i >= (Npartitions-(fold+1)*NvalidationPartitions) ? NvalidationPartitions : 0) ];
 	}
+
+	if(crossvalidateK > 0) // Order randomized partitions
+		sort(partitionPtrs.begin(), partitionPtrs.end(), [](Partition* a,Partition* b) { return a->partitionId < b->partitionId; });
+
+
+	clusters.clear();
+	Nclusters = 0;
 	clusters.push_back({partitionPtrs[0]});
 	Nclusters++;
 	// vector<Partition *> clusteredPartitionPtrs{partitionPtrs[0]};
@@ -268,7 +263,6 @@ void Partitions::clusterPartitions(int fold){
 		}
 	}
 
-
 }
 
 void Partitions::validatePartitions(int fold,string filesuffix){
@@ -279,7 +273,7 @@ void Partitions::validatePartitions(int fold,string filesuffix){
 	for(int i=0;i<NvalidationPartitions;i++){
 		validationPartitionPtrs[i] = &partitions[Npartitions-(fold+1)*NvalidationPartitions+i];
 	}
-	cout << "-->Number of validation partitions out of " << NvalidationPartitions << " (" << validationPartitionPtrs[0]->partitionId+1 << "-" << validationPartitionPtrs[NvalidationPartitions-1]->partitionId+1 << ") that fits in a cluster is..." << flush;
+	cout << "-->Number of validation partitions out of " << NvalidationPartitions << " (" << validationPartitionPtrs[0]->partitionId+1 << "-" << validationPartitionPtrs[NvalidationPartitions-1]->partitionId+1 << ") that fits in one of " << Nclusters << " clusters is..." << flush;
 	vector<int> validatedPartitions(NvalidationPartitions,0);
 
 	#pragma omp parallel for
@@ -379,16 +373,17 @@ void Partitions::readPartitionsFile(){
     		assignmentKey += (*it) + ":";
     		map<string,int>::iterator assignmentId_it = partitionsAssignmentId[i].find(assignmentKey);
     		int assignmentId = partitionsAssignmentIds[i];
-    		if(assignmentId_it != partitionsAssignmentId[i].end()){			assignmentId = assignmentId_it->second;
+    		if(assignmentId_it != partitionsAssignmentId[i].end()){
+    			assignmentId = assignmentId_it->second;
     		}
     		else{
     			partitionsAssignmentId[i][assignmentKey] = partitionsAssignmentIds[i];
     			partitionsAssignmentIds[i]++;
     		}
-    		partitions[i].assignments[nodeNr].push_back(assignmentId); 
-      	partitions[i].clusterSizes[assignmentId]++;
+    		partitions[i].assignments[nodeNr].push_back(assignmentId);
+      		partitions[i].clusterSizes[assignmentId]++;
     	}
-      i++;
+      	i++;
     }
     nodeNr++;
   }
@@ -402,7 +397,7 @@ void Partitions::readPartitionsFile(){
 
 void Partitions::printClusters(){
 
-	cout << "-->Writing clustering results..." << flush;
+	cout << "-->Writing " << Nclusters << " clusters..." << flush;
 
   	my_ofstream ofs;
 	ofs.open(outFileName.c_str());

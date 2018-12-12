@@ -6,7 +6,6 @@
 *.lo
 *.o
 *.obj
-partition-validation
 
 # Precompiled Headers
 *.gch
@@ -31,3 +30,7 @@ partition-validation
 *.exe
 *.out
 *.app
+partition-validation
+
+# Output files
+output*
