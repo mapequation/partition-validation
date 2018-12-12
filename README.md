@@ -46,7 +46,7 @@ input_multilevel_partitions.txt
 3:2 3:2 3:2 3:2 3:3 2:2 2:2 2:2 2:2 2:2  
 
 output_clustering.txt   
-\# Clustered 10 partitions into 2 clusters with maximum distance 0.466666666666667, average maximum distance  0.344444444444444,  and maximum cluster size 5  
+\# Clustered 10 partitions into 2 clusters.  
 \# ClusterId PartitionId  
 \# Cluster 1: 5 partitions.  
 1 1  
