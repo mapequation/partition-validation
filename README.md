@@ -23,8 +23,7 @@ Call: ./partition-validation [-h] [-s \<seed\>] [-t \<distance threshold\>] [--s
 
 -h: This help.  
 seed: Any positive integer.  
-distance threshold: The max distance between two partitions in any cluster. Default is 0.2.  
---skiplines N: Skip N lines in input_partitions.txt before reading data.  
+distance threshold: The max distance from center partition to other partitions in the cluster. Default is 0.2.  
 --validate N: The number of partitions N at the end of the input that will be used for validation. The first partitions will be used to find clusters. Default is 0 validation partitions. 
 --k-fold-crossvalidate k: Perform k-fold cross-validation of all partitions. The training partitions will be used to find clusters and the other ones for validation. Default is 0 folds for no cross-validation.    
 input_partitions.txt: Each column corresponds to a partition and each row corresponds to a node id.  
@@ -49,13 +48,13 @@ input_multilevel_partitions.txt
 output_clustering.txt   
 \# Clustered 10 partitions into 2 clusters with maximum distance 0.466666666666667, average maximum distance  0.344444444444444,  and maximum cluster size 5  
 \# ClusterId PartitionId  
-\# Cluster 1: 5 nodes with max distance 0.466666666666667  
+\# Cluster 1: 5 partitions.  
 1 1  
 1 2  
 1 3  
 1 4  
 1 5  
-\# Cluster 2: 5 nodes with max distance 0.222222222222222  
+\# Cluster 2: 5 partitions.  
 2 6  
 2 7  
 2 8  
