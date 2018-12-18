@@ -105,7 +105,8 @@ private:
 
 	// double wpJaccardDist(int partitionId1, int partitionId2);
 	double wpJaccardDist(Partition *partition1, Partition *partition2);
-	
+	unordered_map<pair<int,int>,double,pairhash> wpJaccardDistLookUp;
+
 	vector<Partition> partitions;
 	int crossvalidateK = 0;
 
@@ -121,9 +122,12 @@ private:
 	ifstream ifs;
   	string line;
 	Clusters clusters;
+	string validationSampleOutFileName;
+	my_ofstream validationOfs;
+
 
 public:
-	Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int seed); 
+	Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed); 
 	void readPartitionsFile();
 	void clusterPartitions(int fold);
 	void printClusters();
@@ -134,15 +138,17 @@ public:
 	int Nclusters = 0;
 	int NtrainingPartitions = 0;
 	int NvalidationPartitions = 0;
+  	int validationSamples = 0;	
 
 	int NtotValidated = 0;
 	int NtotTested = 0;
 };
 
-Partitions::Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int seed){
+Partitions::Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed){
 	this->distThreshold = distThreshold;
 	this->NvalidationPartitions = NvalidationPartitions;
 	this->crossvalidateK = crossvalidateK;
+	this->validationSamples = validationSamples;
 	this->inFileName = inFileName;
 	this->outFileName = outFileName;
 
@@ -159,6 +165,16 @@ Partitions::Partitions(string inFileName,string outFileName,double distThreshold
 	readPartitionsFile();
 	if(crossvalidateK > 0) // Randomize ordered partitions
 		shuffle(partitions.begin(), partitions.end(),mtRands[0]);
+	if(validationSamples > 0){
+		validationSampleOutFileName = outFileName;
+		size_t period_pos = validationSampleOutFileName.find_last_of(".");
+		if(period_pos ==  string::npos)
+			validationSampleOutFileName += "_validation";
+		else
+			validationSampleOutFileName.insert(period_pos,"_validation");
+		validationOfs.open(validationSampleOutFileName.c_str());
+		validationOfs << "#Validated out of " << NvalidationPartitions << endl;
+	}
 
 	ifs.close();
 
@@ -180,6 +196,15 @@ double Partitions::randDouble(double to){
 
 double Partitions::wpJaccardDist(Partition *partition1, Partition *partition2){
 
+	int partition1Id = partition1->partitionId;
+	int partition2Id = partition2->partitionId;
+	if(partition1Id > partition2Id)
+		swap(partition1Id,partition2Id);
+
+	unordered_map<pair<int,int>,double,pairhash>::iterator dist_it = wpJaccardDistLookUp.find(make_pair(partition1Id,partition2Id));
+	if(dist_it != wpJaccardDistLookUp.end())
+		return dist_it->second;
+	
 	int partitionId1Size = partition1->clusterSizes.size();
 	int partitionId2Size = partition2->clusterSizes.size();
 	vector<double> maxClusterSimilarityPartitionId1(partitionId1Size,0.0);
@@ -219,7 +244,10 @@ double Partitions::wpJaccardDist(Partition *partition1, Partition *partition2){
 	}
 	simId2 /= 1.0*NassignmentsId2;
 
-	return 1.0 - 0.5*simId1 - 0.5*simId2;
+	double dist = 1.0 - 0.5*simId1 - 0.5*simId2;
+	 wpJaccardDistLookUp[make_pair(partition1Id,partition2Id)] = dist;
+
+	return dist;
 
 }
 
@@ -231,16 +259,19 @@ void Partitions::clusterPartitions(int fold){
 	omp_init_lock(&lock);
 	#endif
 
-	cout << "Clustering partitions:" << endl;
+	cout << "Clustering " << NtrainingPartitions << " partitions:" << endl;
 
 	vector<Partition*> partitionPtrs = vector<Partition*>(NtrainingPartitions);
+	if(validationSamples > 0){ // Shuffle partitions for new training and validation set
+		shuffle(partitions.begin(), partitions.end(),mtRands[0]);
+	}
+
 	for(int i=0;i<NtrainingPartitions;i++){
 		partitionPtrs[i] = &partitions[i + (i >= (Npartitions-(fold+1)*NvalidationPartitions) ? NvalidationPartitions : 0) ];
 	}
 
-	if(crossvalidateK > 0) // Order randomized partitions
+	if(crossvalidateK > 0 || validationSamples > 0) // Order randomized partitions
 		sort(partitionPtrs.begin(), partitionPtrs.end(), [](Partition* a,Partition* b) { return a->partitionId < b->partitionId; });
-
 
 	clusters.clear();
 	Nclusters = 0;
@@ -273,7 +304,7 @@ void Partitions::validatePartitions(int fold,string filesuffix){
 	for(int i=0;i<NvalidationPartitions;i++){
 		validationPartitionPtrs[i] = &partitions[Npartitions-(fold+1)*NvalidationPartitions+i];
 	}
-	cout << "-->Number of validation partitions out of " << NvalidationPartitions << " (" << validationPartitionPtrs[0]->partitionId+1 << "-" << validationPartitionPtrs[NvalidationPartitions-1]->partitionId+1 << ") that fits in one of " << Nclusters << " clusters is..." << flush;
+	cout << "-->Number of validation partitions out of " << NvalidationPartitions << " that fits in one of " << Nclusters << " clusters is..." << flush;
 	vector<int> validatedPartitions(NvalidationPartitions,0);
 
 	#pragma omp parallel for
@@ -283,28 +314,33 @@ void Partitions::validatePartitions(int fold,string filesuffix){
 			if(wpJaccardDist(validationPartitionPtrs[i],clusters[j][0]) < distThreshold){
 				#pragma omp atomic
 				Nvalidated++;
-				validatedPartitions[i] += 1;				
+				validatedPartitions[i] += 1;
 				break;
 			}
 		}
 	}
-	cout << Nvalidated << ". " << flush;	
+	cout << Nvalidated << ". " << endl;	
 	NtotValidated += Nvalidated;
 	NtotTested += NvalidationPartitions;
 
-	string validationOutFileName = outFileName;
-	size_t period_pos = validationOutFileName.find_last_of(".");
-	if(period_pos ==  string::npos)
-		validationOutFileName += "_validation" + filesuffix;
-	else
-		validationOutFileName.insert(period_pos,"_validation" + filesuffix);
-	cout << "Writing validation results to " << validationOutFileName << endl;
-	my_ofstream ofs;
-	ofs.open(validationOutFileName.c_str());
-	for(int i=0;i<NvalidationPartitions;i++){
-		ofs << validationPartitionPtrs[i]->partitionId+1 << " " << validatedPartitions[i] << endl;
+	if(validationSamples == 0){
+		string validationOutFileName = outFileName;
+		size_t period_pos = validationOutFileName.find_last_of(".");
+		if(period_pos ==  string::npos)
+			validationOutFileName += "_validation";
+		else
+			validationOutFileName.insert(period_pos,"_validation");
+		cout << "Writing validation results to " << validationOutFileName << endl;
+		my_ofstream ofs;
+		ofs.open(validationOutFileName.c_str());
+		for(int i=0;i<NvalidationPartitions;i++){
+			ofs << validationPartitionPtrs[i]->partitionId+1 << " " << validatedPartitions[i] << endl;
+		}
+		ofs.close();
 	}
-	ofs.close();
+	else{
+		validationOfs << Nvalidated << endl;
+	}
 
 }
 
@@ -335,9 +371,7 @@ void Partitions::readPartitionsFile(){
   	cout << "--Not enough partitions for validation. Will not validate.--" << endl;
   }
 
-  cout << "with " << Npartitions << " partitions with " << NtrainingPartitions << " partitions for clustering and " << NvalidationPartitions << " partitions for validation " << flush;
-  if(crossvalidateK > 0)
-  	cout << "in each of the " << crossvalidateK << " folds " << flush;
+  cout << "with " << Npartitions << " partitions..." << flush;
 
   // Count remaining nodes
   while(getline(ifs,line))
@@ -391,8 +425,6 @@ void Partitions::readPartitionsFile(){
   cout << "done!" << endl;
 
 }
-
-
 
 
 void Partitions::printClusters(){
