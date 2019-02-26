@@ -34,6 +34,7 @@ int main(int argc,char *argv[]){
   int argNr = 1;
   double distThreshold = 0.2;
   int NvalidationPartitions = 0;
+  int NtrainingPartitions = 0;
   int crossvalidateK = 0;
   int validationSamples = 0;
   while(argNr < argc){
@@ -44,7 +45,7 @@ int main(int argc,char *argv[]){
       cout << "distance threshold: The max distance from center partition to other partitions in the cluster. Default is 0.2." << endl;
       cout << "--validate <validation size>: The number of partitions at the end of the input that will be used for validation. The first partitions will be used to find clusters. Default is 0 validation partitions." << endl; 
       cout << "--k-fold-crossvalidate k: Perform k-fold cross-validation of all partitions. The training partitions will be used to find clusters and the other ones for validation. Default is 0 folds for no cross-validation." << endl;
-      cout << "--validation-sampling <validation size> <validation samples>: A random set of validation size partitions will be held out in each of validation samples resamplings. Reports the average fraction of validation partitions that belong to clusters. Default is no validation sampling." << endl; 
+      cout << "--validation-sampling <training size> <validation size> <validation samples>: A random set of validation size partitions will be held out from training size partitions in each of validation samples resamplings. Reports the average fraction of validation partitions that belong to clusters. Default is no validation sampling." << endl; 
       cout << "input_partitions.txt: Each column corresponds to a partition and each row corresponds to a node id." << endl;  
       cout << "output_clustering.txt: clusterID partitionID" << endl;  
       exit(-1);
@@ -75,6 +76,8 @@ int main(int argc,char *argv[]){
       argNr++;
     }
     else if(to_string(argv[argNr]) == "--validation-sampling"){
+      argNr++;
+      NtrainingPartitions = atoi(argv[argNr]);
       argNr++;
       NvalidationPartitions = atoi(argv[argNr]);
       argNr++;
@@ -118,7 +121,7 @@ int main(int argc,char *argv[]){
     validationSamples = 0;
   }
   else if(validationSamples > 0){
-    cout << "-->Will perform validation sampling of " << NvalidationPartitions << " partitions " << validationSamples << " times." << endl;
+    cout << "-->Will perform validation sampling of " << NvalidationPartitions << " partitions given " << NtrainingPartitions << " training partitions " << validationSamples << " times." << endl;
     crossvalidateK = 0;
   }   
   else if(NvalidationPartitions > 0){
@@ -130,7 +133,7 @@ int main(int argc,char *argv[]){
   cout << "-->Will write clusters to file: " << outFileName << endl;
   cout << "-->Will use number of threads: " <<  omp_get_max_threads() << endl;
 
-  Partitions partitions(inFileName,outFileName,distThreshold,NvalidationPartitions,crossvalidateK,validationSamples,seed);
+  Partitions partitions(inFileName,outFileName,distThreshold,NtrainingPartitions,NvalidationPartitions,crossvalidateK,validationSamples,seed);
 
   if(crossvalidateK == 0){
     if(validationSamples == 0){

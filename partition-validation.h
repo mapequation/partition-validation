@@ -127,7 +127,7 @@ private:
 
 
 public:
-	Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed); 
+	Partitions(string inFileName,string outFileName,double distThreshold,int NtrainingPartitions,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed); 
 	void readPartitionsFile();
 	void clusterPartitions(int fold);
 	void printClusters();
@@ -144,8 +144,9 @@ public:
 	int NtotTested = 0;
 };
 
-Partitions::Partitions(string inFileName,string outFileName,double distThreshold,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed){
+Partitions::Partitions(string inFileName,string outFileName,double distThreshold,int NtrainingPartitions,int NvalidationPartitions,int crossvalidateK,int validationSamples,int seed){
 	this->distThreshold = distThreshold;
+	this->NtrainingPartitions = NtrainingPartitions;
 	this->NvalidationPartitions = NvalidationPartitions;
 	this->crossvalidateK = crossvalidateK;
 	this->validationSamples = validationSamples;
@@ -364,11 +365,16 @@ void Partitions::readPartitionsFile(){
   if(crossvalidateK > 0)
   	NvalidationPartitions = Npartitions/crossvalidateK;
 
-  if(Npartitions - NvalidationPartitions > 0){
-  	NtrainingPartitions = Npartitions - NvalidationPartitions;
+  if(NtrainingPartitions == 0){
+  	if(Npartitions - NvalidationPartitions > 0){
+  		NtrainingPartitions = Npartitions - NvalidationPartitions;
+  	}
+  	else{
+  		cout << "--Not enough partitions for validation. Will not validate.--" << endl;
+  	}
   }
-  else{
-  	cout << "--Not enough partitions for validation. Will not validate.--" << endl;
+  else if(Npartitions - NvalidationPartitions - NtrainingPartitions < 0){
+  	cout << "--Not enough partitions for training and validation." << endl;
   }
 
   cout << "with " << Npartitions << " partitions..." << flush;
