@@ -174,7 +174,7 @@ Partitions::Partitions(string inFileName,string outFileName,double distThreshold
 		else
 			validationSampleOutFileName.insert(period_pos,"_validation");
 		validationOfs.open(validationSampleOutFileName.c_str());
-		validationOfs << "#Validated out of " << NvalidationPartitions << endl;
+		validationOfs << "# number_of_validated_out_of_" << NvalidationPartitions << " number_of_partition_clusters" << endl;
 	}
 
 	ifs.close();
@@ -340,7 +340,7 @@ void Partitions::validatePartitions(int fold,string filesuffix){
 		ofs.close();
 	}
 	else{
-		validationOfs << Nvalidated << endl;
+		validationOfs << Nvalidated << " " << Nclusters << endl;
 	}
 
 }
