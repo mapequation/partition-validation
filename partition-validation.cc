@@ -12,7 +12,7 @@ unsigned stou(char *s){
   // Call: trade <seed> <Ntries>
 int main(int argc,char *argv[]){
 
-  cout << "Version: December 12, 2019." << endl;
+  cout << "Version: March 5, 2020." << endl;
   cout << "Command: ";
   cout << argv[0];
   for(int i=1;i<argc; i++)
@@ -20,7 +20,7 @@ int main(int argc,char *argv[]){
   cout << endl;
 
   // Parse command input
-  const string CALL_SYNTAX = "Call: ./partition-validation [-h] [-s <seed>] [-t <distance threshold>] [--validate <validation size>] [--k-fold-crossvalidate k] [--validation-sampling <validation size> <validation samples>] input_partitions.txt output_clustering_txt\n";
+  const string CALL_SYNTAX = "Call: ./partition-validation [-h] [-s <seed>] [-t <distance threshold>] [--validate <validation size>] [--k-fold-crossvalidate k] [--validation-sampling <training size> <validation size> <validation samples>] input_partitions.txt output_clustering_txt\n";
   if( argc == 1 ){
     cout << CALL_SYNTAX;
     exit(-1);
@@ -92,10 +92,14 @@ int main(int argc,char *argv[]){
         exit(-1);
       }
 
-      inFileName = string(argv[argNr]);
-      argNr++;
-      outFileName = string(argv[argNr]);
-      argNr++;
+      if(inFileName == "noname"){
+        inFileName = string(argv[argNr]);
+        argNr++;
+      }
+      else if(outFileName == "noname"){
+        outFileName = string(argv[argNr]);
+        argNr++;
+      }
     }
 
   }

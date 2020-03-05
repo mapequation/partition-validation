@@ -34,3 +34,4 @@ partition-validation
 
 # Output files
 output*
+partitions_clustering_validation.txt
