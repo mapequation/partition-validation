@@ -52,7 +52,7 @@ with distance threshold 0.2, run::
 
     ./partition-validation -s 123 -t 0.2 input_partitions.txt output_clustering.txt 
 
-and generate output file::
+and generate output files::
 
     output_clustering.txt   
     # Clustered 10 partitions into 2 clusters.  
@@ -68,7 +68,13 @@ and generate output file::
     2 7  
     2 8  
     2 9  
-    2 10 
+    2 10
+
+and::
+
+	output_clustering_distances.txt
+	# PartitionId_of_cluster_center1 PartitionId_of_cluster_center2 distance Size_of_cluster_center1 Size_of_cluster_center2
+	1 6 0.398148148148148 5 5     
 
 To validate the same hierarchical partitions with 5 training and 5 validation partitions sampled 10 times, run::
 	

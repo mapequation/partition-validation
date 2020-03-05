@@ -453,6 +453,19 @@ void Partitions::printClusters(){
 
 	ofs.close();
 
+	string distanceOutFileName = outFileName;
+	size_t period_pos = distanceOutFileName.find_last_of(".");
+	if(period_pos ==  string::npos)
+		distanceOutFileName += "_distances";
+	else
+		distanceOutFileName.insert(period_pos,"_distances");
+	ofs.open(distanceOutFileName.c_str());
+	ofs << "# PartitionId_of_cluster_center1 PartitionId_of_cluster_center2 distance Size_of_cluster_center1 Size_of_cluster_center2" << endl;
+	for(Clusters::iterator cluster_it1 = clusters.begin(); cluster_it1 != clusters.end(); cluster_it1++)
+		for(Clusters::iterator cluster_it2 = next(cluster_it1); cluster_it2 != clusters.end(); cluster_it2++)
+			ofs << (*cluster_it1->begin())->partitionId+1 << " " << (*cluster_it2->begin())->partitionId+1 << " " << wpJaccardDist(*cluster_it1->begin(),*cluster_it2->begin()) << " " << cluster_it1->size() << " " << cluster_it2->size() << endl;
+
+	ofs.close();
 	cout << "done!" << endl;
 
 }
