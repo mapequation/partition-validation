@@ -442,7 +442,7 @@ void Partitions::printClusters(){
 
 	int i = 1;
 	ofs << "# Clustered " << NtrainingPartitions << " partitions into " << clusters.size() << " clusters." << endl;
-	ofs << "# ClusterId PartitionId" << endl;
+	ofs << "ClusterId PartitionId" << endl;
 	for(Clusters::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++){
 		// ofs << "# Cluster " << i << ": " << cluster_it->size() << " partitions." << endl;
 		for(vector<Partition *>::iterator partition_it = cluster_it->begin(); partition_it != cluster_it->end(); partition_it++)
@@ -461,7 +461,8 @@ void Partitions::printClusters(){
 		distanceOutFileName.insert(period_pos,"_distances");
 	ofs.open(distanceOutFileName.c_str());
 	i = 1;
-	ofs << "# ClusterId1 ClusterId2 Distance" << endl;
+	ofs << "# Clustered " << NtrainingPartitions << " partitions into " << clusters.size() << " clusters." << endl;	
+	ofs << "ClusterId1 ClusterId2 Distance" << endl;
 	for(Clusters::iterator cluster_it1 = clusters.begin(); cluster_it1 != clusters.end(); cluster_it1++){
 		int j = i+1;
 		for(Clusters::iterator cluster_it2 = next(cluster_it1); cluster_it2 != clusters.end(); cluster_it2++){
