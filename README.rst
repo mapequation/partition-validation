@@ -55,26 +55,24 @@ with distance threshold 0.2, run::
 and generate output files::
 
     output_clustering.txt   
-    # Clustered 10 partitions into 2 clusters.  
-    # ClusterId PartitionId  
-    # Cluster 1: 5 partitions.  
-    1 1  
-    1 2  
-    1 3  
-    1 4  
-    1 5  
-    # Cluster 2: 5 partitions.  
-    2 6  
-    2 7  
-    2 8  
-    2 9  
-    2 10
+	# Clustered 10 partitions into 2 clusters.
+	# ClusterId PartitionId
+	1 1
+	1 2
+	1 3
+	1 4
+	1 5
+	2 6
+	2 7
+	2 8
+	2 9
+	2 10
 
 and::
 
 	output_clustering_distances.txt
-	# PartitionId_of_cluster_center1 PartitionId_of_cluster_center2 distance Size_of_cluster_center1 Size_of_cluster_center2
-	1 6 0.398148148148148 5 5     
+	# ClusterId1 ClusterId2 Distance
+	1 2 0.398148148148148     
 
 To validate the same hierarchical partitions with 5 training and 5 validation partitions sampled 10 times, run::
 	

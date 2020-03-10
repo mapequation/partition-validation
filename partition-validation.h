@@ -444,7 +444,7 @@ void Partitions::printClusters(){
 	ofs << "# Clustered " << NtrainingPartitions << " partitions into " << clusters.size() << " clusters." << endl;
 	ofs << "# ClusterId PartitionId" << endl;
 	for(Clusters::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); cluster_it++){
-		ofs << "# Cluster " << i << ": " << cluster_it->size() << " partitions." << endl;
+		// ofs << "# Cluster " << i << ": " << cluster_it->size() << " partitions." << endl;
 		for(vector<Partition *>::iterator partition_it = cluster_it->begin(); partition_it != cluster_it->end(); partition_it++)
 			ofs << i << " " << (*partition_it)->partitionId+1 << endl;
 		
@@ -460,10 +460,18 @@ void Partitions::printClusters(){
 	else
 		distanceOutFileName.insert(period_pos,"_distances");
 	ofs.open(distanceOutFileName.c_str());
-	ofs << "# PartitionId_of_cluster_center1 PartitionId_of_cluster_center2 distance Size_of_cluster_center1 Size_of_cluster_center2" << endl;
-	for(Clusters::iterator cluster_it1 = clusters.begin(); cluster_it1 != clusters.end(); cluster_it1++)
-		for(Clusters::iterator cluster_it2 = next(cluster_it1); cluster_it2 != clusters.end(); cluster_it2++)
-			ofs << (*cluster_it1->begin())->partitionId+1 << " " << (*cluster_it2->begin())->partitionId+1 << " " << wpJaccardDist(*cluster_it1->begin(),*cluster_it2->begin()) << " " << cluster_it1->size() << " " << cluster_it2->size() << endl;
+	i = 1;
+	ofs << "# ClusterId1 ClusterId2 Distance" << endl;
+	for(Clusters::iterator cluster_it1 = clusters.begin(); cluster_it1 != clusters.end(); cluster_it1++){
+		int j = i+1;
+		for(Clusters::iterator cluster_it2 = next(cluster_it1); cluster_it2 != clusters.end(); cluster_it2++){
+			// ofs << (*cluster_it1->begin())->partitionId+1 << " " << (*cluster_it2->begin())->partitionId+1 << " " << wpJaccardDist(*cluster_it1->begin(),*cluster_it2->begin()) << endl;
+			ofs << i << " " << j << " " << wpJaccardDist(*cluster_it1->begin(),*cluster_it2->begin()) << endl;			
+			j++;
+		}
+		
+		i++;
+	}
 
 	ofs.close();
 	cout << "done!" << endl;
