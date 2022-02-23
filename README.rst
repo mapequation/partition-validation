@@ -17,7 +17,7 @@ code with the included Makefile.
 
 Run the binary ``partition-validation`` using::
 
-    ./partition-validation [-h] [-s <seed>] [-t <distance threshold>] [--skiplines N] [--validate N] [--k-fold-crossvalidate <k>] input_partitions.txt output_clustering_txt
+    ./partition-validation [-h] [-s <seed>] [-t <distance threshold>] [--validate N] [--k-fold-crossvalidate <k>] input_partitions.txt output_clustering_txt
 
 For a list of options, run::
 

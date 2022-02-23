@@ -3,7 +3,7 @@
 CXX = g++
 LINK = $(CXX)
 #CXXFLAGS = -std=c++11 -Wall -g 
-CXXFLAGS = -std=c++11 -Wall -O3
+CXXFLAGS = -std=c++17 -O3 -Wall -Wextra -pedantic -Wno-unknown-pragmas
 #CXXFLAGS = -std=c++11 -Wall -O3 -fopenmp
 LFLAGS = -lm
 #LFLAGS = -lm -fopenmp
@@ -12,9 +12,9 @@ LFLAGS = -lm
 # 	LFLAGS += -fopenmp
 # endif
 
-TARGET  = partition-validation
+TARGET = partition-validation
 
-HEADER  = partition-validation.h
+HEADER = partition-validation.h
 FILES = partition-validation.cc
 
 OBJECTS = $(FILES:.cc=.o)
